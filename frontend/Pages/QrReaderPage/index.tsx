@@ -1,65 +1,62 @@
 import * as React from 'react'
 import { StyleSheet, View } from 'react-native'
-// import { Camera, useCameraDevices } from 'react-native-vision-camera'
-// import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner'
+import { BarcodeFormat, BrowserMultiFormatReader, DecodeHintType } from '@zxing/library';
 import { Text, useTheme } from 'react-native-paper'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { useTranslation } from 'react-i18next'
-// import { goBack } from '../../lib/Navigation'
-// import { AppContext } from '../../Contexts/AppContext'
+import { goBack } from '../../lib/Navigation'
+import { AppContext } from '../../Contexts/AppContext'
 
 export const QrReaderPage: React.FC = () => {
   const theme = useTheme()
   const { t } = useTranslation('common')
-  // const { setQrReader } = React.useContext(AppContext)
-  // const [hasPermission, setHasPermission] = React.useState<boolean>()
-  // const devices = useCameraDevices()
-  // const device = devices.back
+  const [hasPermission, setHasPermission] = React.useState<boolean>(true);
 
-  // const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
-  //   checkInverted: true,
-  // })
+  const videoRef =React. useRef<HTMLVideoElement>(null);
+  const reader = React.useRef(new BrowserMultiFormatReader());
+  reader.current.hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]);
+  React.useEffect(() => {
+    if (!videoRef.current) return;
+    reader.current.decodeFromConstraints(
+      {
+        audio: false,
+        video: {
+          facingMode: 'environment',
+        },
+      },
+      videoRef.current,
+      (result, error) => {
+        if (result) console.log(result);
+        if (error) console.log(error);
+      }
+    );
+    return () => {
+      reader.current.reset();
+    }
+  }, [videoRef]);
 
-  // React.useEffect(() => {
-  //   if (barcodes.length > 0) {
-  //     const lastIndex = barcodes.length - 1
-  //     const qrValue = barcodes[lastIndex].displayValue
-  //     if (qrValue) {
-  //       setQrReader(qrValue)
-  //       goBack()
-  //     }
-  //   }
-  // }, [barcodes])
+  const NoPermissionsComponent = React.useMemo(
+    () => (
+      <View style={styles.blank}>
+        <MaterialCommunityIcons
+          name='camera-off-outline'
+          size={64}
+          style={styles.center}
+          color={theme.colors.onPrimaryContainer}
+        />
+        <Text variant='headlineSmall' style={styles.center}>
+          {t('qrReaderPage.emptyTitle')}
+        </Text>
+      </View>
+    ),
+    [],
+  )
 
-  // React.useEffect(() => {
-  //   ;(async () => {
-  //     const status = await Camera.requestCameraPermission()
-  //     setHasPermission(status === 'authorized')
-  //   })()
-  // }, [])
-
-  // const NoPermissionsComponent = React.useMemo(
-  //   () => (
-  //     <View style={styles.blank}>
-  //       <MaterialCommunityIcons
-  //         name='camera-off-outline'
-  //         size={64}
-  //         style={styles.center}
-  //         color={theme.colors.onPrimaryContainer}
-  //       />
-  //       <Text variant='headlineSmall' style={styles.center}>
-  //         {t('qrReaderPage.emptyTitle')}
-  //       </Text>
-  //     </View>
-  //   ),
-  //   [],
-  // )
-
-  // if (hasPermission === undefined) return <></>
-  // return device != null && hasPermission ? (
-  return (
+  if (hasPermission === undefined) return <></>
+  return hasPermission ? (
     <View style={styles.container}>
       <View style={styles.reader}>
+        <video ref={videoRef} />
       </View>
       <View style={styles.title}>
         <MaterialCommunityIcons
@@ -73,8 +70,8 @@ export const QrReaderPage: React.FC = () => {
         </Text>
       </View>
     </View>
-    // ) : (
-    //   NoPermissionsComponent
+    ) : (
+      NoPermissionsComponent
   )
 }
 

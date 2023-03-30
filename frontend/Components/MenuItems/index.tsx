@@ -60,7 +60,7 @@ export const MenuItems: React.FC = () => {
     } else if (key === 'about') {
       navigate('About')
     } else if (key === 'faq') {
-      navigate('Faq')
+      navigate('QrReader')
     } else if (key === 'config') {
       navigate('Config')
     } else if (key === 'contacts') {
